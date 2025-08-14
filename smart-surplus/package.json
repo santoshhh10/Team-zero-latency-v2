@@ -1,0 +1,13 @@
+{
+  "name": "smart-surplus",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently -n server,client -c red,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "server": "npm --prefix server run dev",
+    "client": "npm --prefix client run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

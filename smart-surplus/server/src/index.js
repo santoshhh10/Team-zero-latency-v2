@@ -18,7 +18,11 @@ const server = http.createServer(app);
 
 const io = new SocketIOServer(server, {
 	cors: {
-		origin: config.clientOrigin,
+		origin: (origin, cb) => {
+			if (!origin) return cb(null, true);
+			if (config.clientOrigins.includes(origin)) return cb(null, true);
+			return cb(new Error('Not allowed by CORS'));
+		},
 		methods: ['GET', 'POST', 'PUT', 'DELETE'],
 		credentials: true
 	}
@@ -26,21 +30,24 @@ const io = new SocketIOServer(server, {
 setIo(io);
 
 io.on('connection', (socket) => {
-	// Optional: authenticate via token in handshake auth
 	const { token } = socket.handshake.auth || {};
 	if (token) {
 		try {
-			// Lazy import to avoid cycle
 			import('./utils/authSocket.js').then(({ identifySocketUser }) => {
 				identifySocketUser(socket, token);
 			});
-		} catch {
-			// no-op
-		}
+		} catch {}
 	}
 });
 
-app.use(cors({ origin: config.clientOrigin, credentials: true }));
+app.use(cors({
+	origin: (origin, cb) => {
+		if (!origin) return cb(null, true);
+		if (config.clientOrigins.includes(origin)) return cb(null, true);
+		return cb(new Error('Not allowed by CORS'));
+	},
+	credentials: true
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 
