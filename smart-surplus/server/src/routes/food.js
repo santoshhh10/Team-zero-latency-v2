@@ -6,6 +6,7 @@ import { Order } from '../models/Order.js';
 import { User } from '../models/User.js';
 import { getIo } from '../realtime/io.js';
 import { v4 as uuidv4 } from 'uuid';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -39,10 +40,11 @@ router.get('/mine', requireAuth, async (req, res) => {
 	}
 });
 
-router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
+router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), upload.single('image'), async (req, res) => {
 	try {
 		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent } = req.body;
 		if (!title || !quantity || !bestBefore) return res.status(400).json({ error: 'Missing required fields' });
+		const imageUrl = req.file ? `/uploads/${req.file.filename}` : (req.body.imageUrl || '');
 		const item = await FoodItem.create({
 			title,
 			description,
@@ -54,7 +56,8 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 			bestBefore: new Date(bestBefore),
 			location,
 			preorderAllowed: preorderAllowed !== false,
-			discountPercent: discountPercent || 0
+			discountPercent: discountPercent || 0,
+			imageUrl
 		});
 		getIo()?.emit('new-listing', { item });
 		res.status(201).json({ item });
@@ -64,7 +67,7 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 	}
 });
 
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
 	try {
 		const { id } = req.params;
 		if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
@@ -77,6 +80,7 @@ router.put('/:id', requireAuth, async (req, res) => {
 		for (const key of updatable) {
 			if (key in req.body) existing[key] = req.body[key];
 		}
+		if (req.file) existing.imageUrl = `/uploads/${req.file.filename}`;
 		await existing.save();
 		res.json({ item: existing });
 	} catch (err) {
@@ -104,7 +108,6 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 			qrSecret: secret,
 			qrPayload: JSON.stringify({ orderId: '', secret: secret })
 		});
-		// Fill orderId now that it exists
 		order.qrPayload = JSON.stringify({ orderId: String(order._id), secret });
 		await order.save();
 		item.quantity = item.quantity - quantity;

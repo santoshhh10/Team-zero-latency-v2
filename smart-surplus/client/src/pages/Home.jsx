@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FiMapPin, FiFilter, FiTag } from 'react-icons/fi'
+import { FiMapPin, FiFilter } from 'react-icons/fi'
 import { formatDistanceToNow } from 'date-fns'
 import { useAuth } from '../state/auth.jsx'
 
@@ -8,10 +8,11 @@ function ListingCard({ item, onReserve }) {
 	const discounted = item.discountPercent > 0
 	const price = item.price
 	const finalPrice = discounted ? Math.max(0, price * (1 - item.discountPercent / 100)) : price
+	const imageSrc = item.imageUrl || `https://picsum.photos/seed/${item._id}/600/400`
 	return (
 		<div className="card bg-base-100 shadow hover:shadow-lg transition overflow-hidden">
 			<figure className="h-36 bg-gray-100">
-				<img src={`https://picsum.photos/seed/${item._id}/600/400`} alt={item.title} className="w-full h-full object-cover" />
+				<img src={imageSrc} alt={item.title} className="w-full h-full object-cover" />
 			</figure>
 			<div className="card-body">
 				<h3 className="card-title text-lg">{item.title}</h3>
@@ -26,6 +27,7 @@ function ListingCard({ item, onReserve }) {
 						{discounted ? (
 							<div className="flex items-baseline gap-2">
 								<span className="text-lg font-semibold">₹{finalPrice.toFixed(0)}</span>
+								<span className="text-xs text-gray-500">(discounted)</span>
 								<span className="line-through text-sm text-gray-400">₹{price.toFixed(0)}</span>
 								<span className="badge badge-success">{item.discountPercent}% OFF</span>
 							</div>
