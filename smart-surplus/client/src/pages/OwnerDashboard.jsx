@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../state/auth.jsx'
-import { QrScanner } from '@yudiel/react-qr-scanner'
+import { Scanner as QrScanner } from '@yudiel/react-qr-scanner'
 
 export default function OwnerDashboard() {
 	const { api, user } = useAuth()
