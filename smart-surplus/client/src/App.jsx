@@ -9,13 +9,14 @@ import OwnerDashboard from './pages/OwnerDashboard.jsx'
 import Events from './pages/Events.jsx'
 import Analytics from './pages/Analytics.jsx'
 import { useAuth } from './state/auth.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
 
 function Navbar() {
   const { user } = useAuth()
   const location = useLocation()
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
   return (
-    <div className="sticky top-0 z-40 bg-base-100/80 backdrop-blur border-b">
+    <div className="sticky top-0 z-50 glass border-b border-white/10">
       <div className="max-w-6xl mx-auto px-4">
         <div className="navbar p-0 min-h-16">
           <div className="flex-1 gap-3 items-center">
@@ -23,7 +24,7 @@ function Navbar() {
             <div className="hidden md:flex items-center flex-1">
               <div className="relative w-full">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input className="input input-bordered w-full pl-10" placeholder="Search dishes, canteens, events" />
+                <input className="input input-bordered w-full pl-10 glow" placeholder="Search dishes, canteens, events" />
               </div>
             </div>
           </div>
@@ -31,8 +32,9 @@ function Navbar() {
             <Link to="/events" className="btn btn-ghost">Events</Link>
             <Link to="/analytics" className="btn btn-ghost">Impact</Link>
             {user?.role && (user.role === 'canteen' || user.role === 'organizer' || user.role === 'admin') && (
-              <Link to="/list" className="btn btn-primary btn-sm gap-2"><FiPlusCircle /> List surplus</Link>
+              <Link to="/list" className="btn btn-primary btn-sm gap-2 glow"><FiPlusCircle /> List surplus</Link>
             )}
+            <ThemeToggle />
             <button className="btn btn-ghost btn-circle"><FiBell size={20} /></button>
             {user ? (
               <Link to="/me" className="btn btn-outline btn-sm gap-2"><FiUser /> {user.name.split(' ')[0]}</Link>
