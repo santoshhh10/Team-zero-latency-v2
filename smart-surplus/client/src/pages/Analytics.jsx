@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../state/auth.jsx'
+import { Line, Doughnut } from 'react-chartjs-2'
+import { Chart, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend } from 'chart.js'
+Chart.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend)
 
 export default function Analytics() {
 	const { api } = useAuth()
@@ -20,9 +23,9 @@ export default function Analytics() {
 			</section>
 			<div className="max-w-6xl mx-auto px-4 py-8">
 				{!summary ? (
-					<div className="skeleton h-24"></div>
+					<div className="skeleton-glass h-24"></div>
 				) : (
-					<div className="stats shadow">
+					<div className="stats glass">
 						<div className="stat">
 							<div className="stat-title">Portions Collected</div>
 							<div className="stat-value">{summary.portionsCollected}</div>
@@ -38,6 +41,18 @@ export default function Analytics() {
 						<div className="stat">
 							<div className="stat-title">Active Listings</div>
 							<div className="stat-value">{summary.activeListings}</div>
+						</div>
+					</div>
+				)}
+				{summary && (
+					<div className="grid md:grid-cols-2 gap-6 mt-6">
+						<div className="glass p-4">
+							<div className="font-semibold mb-2">Collections over time (demo)</div>
+							<Line data={{ labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], datasets:[{ label:'Portions', data:[3,5,8,6,9,12,7], borderColor:'#6366f1', tension:.35 }] }} options={{ plugins:{legend:{display:false}}, scales:{y:{display:false},x:{display:false}} }} />
+						</div>
+						<div className="glass p-4">
+							<div className="font-semibold mb-2">Impact breakdown</div>
+							<Doughnut data={{ labels:['Carbon (kg)','Water (L)'], datasets:[{ data:[summary.carbonSavedKg, summary.waterSavedLiters], backgroundColor:['#6366f1','#10b981'] }] }} options={{ plugins:{legend:{position:'bottom'}} }} />
 						</div>
 					</div>
 				)}

@@ -7,23 +7,35 @@ export default {
 		'./src/**/*.{js,ts,jsx,tsx}'
 	],
 	theme: {
-		extend: {
-			colors: {
-				primary: '#e23744',
-				accent: '#ff6d6d'
-			}
-		}
+		extend: {}
 	},
 	plugins: [daisyui],
 	daisyui: {
 		themes: [
 			{
-				zomato: {
-					primary: '#e23744',
-					secondary: '#1c1c1c',
-					accent: '#ff6d6d',
-					neutral: '#2b3440',
-					'base-100': '#ffffff'
+				smartlight: {
+					primary: '#6366f1',
+					secondary: '#10b981',
+					accent: '#f59e0b',
+					neutral: '#1f2937',
+					'base-100': '#f7fafc',
+					info: '#38bdf8',
+					success: '#10b981',
+					warning: '#f59e0b',
+					error: '#ef4444'
+				}
+			},
+			{
+				smartdark: {
+					primary: '#6366f1',
+					secondary: '#10b981',
+					accent: '#f59e0b',
+					neutral: '#0b1220',
+					'base-100': '#0f172a',
+					info: '#38bdf8',
+					success: '#10b981',
+					warning: '#f59e0b',
+					error: '#ef4444'
 				}
 			}
 		]
