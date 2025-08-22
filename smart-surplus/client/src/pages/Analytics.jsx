@@ -41,7 +41,7 @@ export default function Analytics() {
 	}, [summary])
 	return (
 		<div className="fixed inset-0 z-40 bg-black/40">
-			<div className="absolute inset-x-0 bottom-0 bg-white/60 dark:bg-[#0f172a]/80 backdrop-blur rounded-t-2xl overflow-auto max-h-[92%]">
+							<div className="absolute inset-x-0 bottom-0 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/75 rounded-t-2xl overflow-auto max-h-[92%]">
 				<div className="max-w-6xl mx-auto px-4 py-6">
 					<div className="flex items-center justify-between">
 						<div>

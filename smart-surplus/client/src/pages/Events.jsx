@@ -30,26 +30,18 @@ export default function Events() {
 
 	return (
 		<div>
-			<section className="relative overflow-hidden" style={{background:'linear-gradient(135deg, #FFF8E1 0%, #E8F5E8 100%)'}}>
+			<section className="relative overflow-hidden bg-base-100/90">
 				<div className="max-w-6xl mx-auto px-4 py-8">
-					<h2 className="text-3xl md:text-4xl font-extrabold">🎉 Campus Food Events 🍽️</h2>
-					<p className="text-gray-600">"Join the food-sharing community!"</p>
+					<h2 className="text-3xl md:text-4xl font-extrabold text-base-content">🎉 Campus Food Events 🍽️</h2>
+					<p className="text-base-content/70">"Join the food-sharing community!"</p>
 				</div>
 			</section>
 			<div className="max-w-6xl mx-auto px-4 py-8">
 				<div className="flex flex-wrap gap-3 mb-6">
-					<button className="px-3 py-1 rounded-full text-sm" style={{background:'linear-gradient(90deg, #FF9800, #FF5722)'}}>
-						<span className="text-white">All</span>
-					</button>
-					<button className="px-3 py-1 rounded-full text-sm" style={{background:'#4CAF50'}}>
-						<span className="text-white">🤝 Food Sharing</span>
-					</button>
-					<button className="px-3 py-1 rounded-full text-sm" style={{background:'#FF9800'}}>
-						<span className="text-white">👨‍🍳 Cooking Classes</span>
-					</button>
-					<button className="px-3 py-1 rounded-full text-sm" style={{background:'#26A69A'}}>
-						<span className="text-white">🌍 Sustainability Workshops</span>
-					</button>
+					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">All</button>
+					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">🤝 Food Sharing</button>
+					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">👨‍🍳 Cooking Classes</button>
+					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">🌍 Sustainability Workshops</button>
 				</div>
 				<div className="grid md:grid-cols-2 gap-8">
 					<div>

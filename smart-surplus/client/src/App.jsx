@@ -37,7 +37,7 @@ function Navbar() {
     return () => { if (raf) cancelAnimationFrame(raf) }
   }, [user?.greenPoints])
   return (
-    <div className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-r from-[#FFF8E1]/90 to-[#E8F5E8]/90 backdrop-blur">
+    <div className="sticky top-0 z-50 border-b border-base-200/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/75">
       <div className="max-w-6xl mx-auto px-4">
         <div className="navbar p-0 min-h-16">
           <div className="flex-1 gap-3 items-center">

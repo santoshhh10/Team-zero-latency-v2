@@ -13,20 +13,31 @@ body { font-family: Inter, system-ui, sans-serif; }
     radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,.25), transparent 60%),
     radial-gradient(1200px 600px at 80% -10%, rgba(16,185,129,.25), transparent 60%);
 }
-body { background-image: var(--hero-grad); background-attachment: fixed; }
+body { background-image: none; }
 
-/* Glassmorphism helpers */
+/* Theme-aware glass and skeleton */
+:root {
+  --surface-mix: 88%;
+  --border-mix: 12%;
+}
 .glass {
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.12);
+  background: color-mix(in oklab, var(--b1) var(--surface-mix), transparent);
+  border: 1px solid color-mix(in oklab, var(--bc) var(--border-mix), transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
   border-radius: 16px;
 }
 .glow { box-shadow: 0 0 0 0 rgba(99,102,241,.4); transition: box-shadow .25s ease, transform .25s ease; }
 .glow:hover { box-shadow: 0 10px 30px rgba(99,102,241,.25); transform: translateY(-2px); }
-.skeleton-glass { background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.12) 37%, rgba(255,255,255,.06) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: 16px; }
+.skeleton-glass {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--b1) 86%, transparent) 25%,
+    color-mix(in oklab, var(--b1) 92%, transparent) 37%,
+    color-mix(in oklab, var(--b1) 86%, transparent) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite; border-radius: 16px;
+}
 @keyframes shimmer { 0% {background-position: 100% 0} 100% {background-position: -100% 0} }
 
 /* Food-centric palette helpers and animations */

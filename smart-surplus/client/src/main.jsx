@@ -6,8 +6,10 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './state/auth.jsx'
  import { SocketProvider } from './state/socket.jsx'
-const saved = localStorage.getItem('theme') || 'smartdark';
-document.documentElement.setAttribute('data-theme', saved);
+const saved = localStorage.getItem('theme');
+const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const theme = saved || (prefersDark ? 'smartdark' : 'smartlight');
+document.documentElement.setAttribute('data-theme', theme);
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
