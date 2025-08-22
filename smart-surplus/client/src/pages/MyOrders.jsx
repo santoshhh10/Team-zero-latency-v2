@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../state/auth.jsx'
-import QRCode from 'react-qr-code'
 import { format } from 'date-fns'
 
 export default function MyOrders() {
@@ -27,9 +26,12 @@ export default function MyOrders() {
 							<h3 className="card-title text-lg">{o.foodItem?.title || 'Food item'}</h3>
 							<p className="text-sm text-gray-500">Status: {o.status}</p>
 							{(o.status === 'RESERVED') && (
-								<div className="bg-white p-3 rounded grid place-items-center">
-									<QRCode value={o.qrPayload} size={128} />
-									<p className="text-xs text-gray-500 mt-2">Show this QR at pickup</p>
+								<div className="p-3 rounded grid gap-2">
+									<div className="text-sm">Your pickup token:</div>
+									<div className="text-2xl font-mono font-bold tracking-widest">
+										{(() => { try { const p = JSON.parse(o.qrPayload); return p.token || p.secret || '—' } catch { return '—' } })()}
+									</div>
+									<div className="text-xs text-gray-500">Show this token at pickup</div>
 								</div>
 							)}
 							<p className="text-xs text-gray-400">Reserved on {format(new Date(o.createdAt), 'MMM d, p')}</p>

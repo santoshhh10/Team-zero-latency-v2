@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuth } from '../state/auth.jsx'
 
@@ -7,6 +7,8 @@ export default function ListItem() {
 	const [form, setForm] = useState({ title: '', description: '', quantity: 10, unit: 'portion', price: 0, qualityTag: 'SAFE', bestBefore: '', location: '', discountPercent: 0, imageFile: null })
 	const [step, setStep] = useState(0)
 	const [preview, setPreview] = useState('')
+    const videoRef = useRef(null)
+    const [camOn, setCamOn] = useState(false)
 
 	async function submit(e) {
 		e.preventDefault()
@@ -71,6 +73,41 @@ export default function ListItem() {
 								<input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { const url = URL.createObjectURL(f); setPreview(url); setForm(x=>({...x, imageFile: f})) } }} />
 								{preview ? <img src={preview} alt="preview" className="h-28 object-cover rounded"/> : <div className="text-gray-500">Drag & drop or click to upload</div>}
 							</label>
+							<div className="divider">or</div>
+							<div className="space-y-2">
+								{camOn ? (
+									<div className="space-y-2">
+										<video ref={videoRef} autoPlay playsInline className="w-full rounded" />
+										<div className="flex gap-2">
+											<button type="button" className="btn btn-sm" onClick={async () => {
+												try {
+													const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+													if (videoRef.current) videoRef.current.srcObject = stream
+												} catch {}
+											}}>Start</button>
+											<button type="button" className="btn btn-sm btn-primary" onClick={() => {
+												const video = videoRef.current; if (!video) return
+												const canvas = document.createElement('canvas')
+												canvas.width = video.videoWidth; canvas.height = video.videoHeight
+												const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0)
+												canvas.toBlob((blob) => {
+													if (blob) {
+														const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
+														const url = URL.createObjectURL(file)
+														setPreview(url); setForm(x => ({ ...x, imageFile: file }))
+													}
+												}, 'image/jpeg', 0.85)
+											}}>Capture</button>
+											<button type="button" className="btn btn-sm btn-ghost" onClick={() => {
+												const video = videoRef.current; if (video && video.srcObject) { (video.srcObject).getTracks().forEach(t => t.stop()); video.srcObject = null }
+												setCamOn(false)
+											}}>Stop</button>
+										</div>
+									</div>
+								) : (
+									<button type="button" className="btn btn-outline btn-sm" onClick={() => setCamOn(true)}>Use Camera</button>
+								)}
+							</div>
 						</div>
 					</>
 				)}

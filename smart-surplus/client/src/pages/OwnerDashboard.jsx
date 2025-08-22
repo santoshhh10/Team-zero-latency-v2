@@ -8,6 +8,7 @@ export default function OwnerDashboard() {
 	const [orders, setOrders] = useState([])
 	const [scanMode, setScanMode] = useState(false)
 	const [scanResult, setScanResult] = useState('')
+	const [tokenInput, setTokenInput] = useState('')
 
 	useEffect(() => {
 		if (!user) return
@@ -27,8 +28,24 @@ export default function OwnerDashboard() {
 		try {
 			const res = await api.post('/orders/verify', { qrText })
 			alert('Verified order ' + res.data.orderId)
+			// refresh
+			const [mine, ords] = await Promise.all([api.get('/food/mine'), api.get('/orders/owner')])
+			setItems(mine.data.items); setOrders(ords.data.orders)
 		} catch (err) {
 			alert(err.response?.data?.error || 'Failed to verify')
+		}
+	}
+
+	async function claimByToken() {
+		if (!tokenInput.trim()) return alert('Enter token')
+		try {
+			const res = await api.post('/orders/verify', { token: tokenInput.trim() })
+			alert('Claimed order ' + res.data.orderId)
+			setTokenInput('')
+			const [mine, ords] = await Promise.all([api.get('/food/mine'), api.get('/orders/owner')])
+			setItems(mine.data.items); setOrders(ords.data.orders)
+		} catch (err) {
+			alert(err.response?.data?.error || 'Failed to claim')
 		}
 	}
 
@@ -47,6 +64,11 @@ export default function OwnerDashboard() {
 					<QrScanner onDecode={(res) => { setScanResult(res); verify(res) }} onError={(err) => console.log(err?.message)} />
 				</div>
 			)}
+			{/* Token claim input */}
+			<div className="mb-6 flex items-center gap-2">
+				<input className="input input-bordered input-sm w-48" placeholder="Enter token" value={tokenInput} onChange={e => setTokenInput(e.target.value.toUpperCase())} />
+				<button className="btn btn-sm" onClick={claimByToken}>Claim</button>
+			</div>
 			<div className="grid md:grid-cols-2 gap-8">
 				<div>
 					<h3 className="font-semibold mb-2">My Listings</h3>
