@@ -69,11 +69,7 @@ export default function ListItem() {
 					<>
 						<div className="">
 							<div className="text-sm text-gray-400 mb-2">Photo (optional)</div>
-							<label className="border border-dashed border-white/20 rounded p-6 grid place-items-center cursor-pointer hover:border-white/40">
-								<input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { const url = URL.createObjectURL(f); setPreview(url); setForm(x=>({...x, imageFile: f})) } }} />
-								{preview ? <img src={preview} alt="preview" className="h-28 object-cover rounded"/> : <div className="text-gray-500">Drag & drop or click to upload</div>}
-							</label>
-							<div className="divider">or</div>
+							{/* Removed manual upload; live camera only */}
 							<div className="space-y-2">
 								{camOn ? (
 									<div className="space-y-2">
