@@ -17,21 +17,21 @@ export default function FoodCard({ item, onReserve }) {
     <div className="glass overflow-hidden hover:translate-y-[-2px] transition food-card">
       <div className="relative h-40">
         <img src={imgSrc} alt={item.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-base-300/60 to-transparent" />
         {discounted && (
           <div className="absolute left-2 top-2">
-            <span className="px-2 py-1 rounded-full text-xs font-bold text-white" style={{background:'linear-gradient(135deg, #FF9800 0%, #FF5722 100%)'}}>🔥 HOT DEAL</span>
+            <span className="px-2 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r from-orange-400 to-orange-600">🔥 HOT DEAL</span>
           </div>
         )}
         <button className="absolute top-2 right-2 btn btn-circle btn-ghost btn-sm"><FiHeart/></button>
       </div>
       <div className="p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{item.title}</h3>
+          <h3 className="font-semibold text-base-content">{item.title}</h3>
           <span className={`badge ${freshnessMap[item.qualityTag] || 'badge-ghost'}`}>{item.qualityTag}</span>
         </div>
-        <p className="text-sm text-gray-400 line-clamp-2 mt-1">{item.description || 'Tasty and safe surplus food available.'}</p>
-        <div className="flex items-center gap-2 text-xs mt-2 text-gray-400"><FiMapPin/>{item.location || 'Campus'}</div>
+        <p className="text-sm text-base-content/60 line-clamp-2 mt-1">{item.description || 'Tasty and safe surplus food available.'}</p>
+        <div className="flex items-center gap-2 text-xs mt-2 text-base-content/60"><FiMapPin/>{item.location || 'Campus'}</div>
         <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
           <div className="glass px-2 py-1 text-center">🍽️ {item.quantity}{item.unit ? ` ${item.unit}` : ''}</div>
           <div className="glass px-2 py-1 text-center">🌱 {co2Saved.toFixed(1)} kg CO2</div>
@@ -42,7 +42,7 @@ export default function FoodCard({ item, onReserve }) {
             {discounted ? (
               <div className="flex items-baseline gap-2">
                 <span className="text-lg font-bold text-primary">₹{finalPrice.toFixed(0)}</span>
-                <span className="line-through text-xs text-gray-500">₹{price.toFixed(0)}</span>
+                <span className="line-through text-xs text-base-content/50">₹{price.toFixed(0)}</span>
                 <span className="badge badge-success">{item.discountPercent}% OFF</span>
               </div>
             ) : <span className="text-lg font-bold">{price > 0 ? `₹${price.toFixed(0)}` : 'Free'}</span>}

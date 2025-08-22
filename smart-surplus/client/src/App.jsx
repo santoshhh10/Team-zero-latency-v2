@@ -10,15 +10,14 @@ import Events from './pages/Events.jsx'
 import Analytics from './pages/Analytics.jsx'
 import { useAuth } from './state/auth.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
+import { useSocket } from './state/socket.jsx'
+import { getLevelAndProgress } from './utils/points.js'
 
 function Navbar() {
   const { user } = useAuth()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [notif, setNotif] = useState([])
-  try { const { notifications } = require('./state/socket.jsx'); } catch {}
-  // lazy import hook
-  const { useSocket } = require('./state/socket.jsx')
   const { notifications } = useSocket()
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
   const [points, setPoints] = useState(user?.greenPoints || 0)
@@ -39,7 +38,7 @@ function Navbar() {
     return () => { if (raf) cancelAnimationFrame(raf) }
   }, [user?.greenPoints])
   return (
-    <div className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-r from-[#FFF8E1]/90 to-[#E8F5E8]/90 backdrop-blur">
+    <div className="sticky top-0 z-50 border-b border-base-200/60 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/75">
       <div className="max-w-6xl mx-auto px-4">
         <div className="navbar p-0 min-h-16">
           <div className="flex-1 gap-3 items-center">
@@ -57,9 +56,12 @@ function Navbar() {
             {user?.role && (user.role === 'canteen' || user.role === 'organizer' || user.role === 'admin') && (
               <Link to="/list" className="btn btn-primary btn-sm gap-2 glow"><FiPlusCircle /> List surplus</Link>
             )}
-            <div className="hidden sm:flex items-center gap-2 rounded-full px-3 py-1 points-counter bg-white/60 text-[#2E7D32]">
-              <span>🌿</span>
-              <span className="text-sm font-semibold">{points} Green Points</span>
+            <div className="hidden sm:flex items-center gap-3 rounded-full px-3 py-2 bg-base-100 border">
+              <div className="flex items-center gap-2">
+                <span>🌿</span>
+                <span className="text-sm font-semibold">{points} pts</span>
+              </div>
+              <PointsMiniBar points={points} />
             </div>
             <ThemeToggle />
             <div className="dropdown dropdown-end">
@@ -87,6 +89,18 @@ function Navbar() {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PointsMiniBar({ points }) {
+  const { level, progressPercent } = getLevelAndProgress(points)
+  return (
+    <div className="flex items-center gap-2">
+      <div className="text-xs">Lv {level}</div>
+      <div className="h-2 w-20 rounded bg-base-200 overflow-hidden">
+        <div className="h-2 bg-primary" style={{ width: `${progressPercent}%` }} />
       </div>
     </div>
   )

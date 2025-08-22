@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../state/auth.jsx'
 import { Scanner as QrScanner } from '@yudiel/react-qr-scanner'
+import toast from 'react-hot-toast'
 
 export default function OwnerDashboard() {
 	const { api, user } = useAuth()
@@ -9,6 +10,7 @@ export default function OwnerDashboard() {
 	const [scanMode, setScanMode] = useState(false)
 	const [scanResult, setScanResult] = useState('')
 	const [tokenInput, setTokenInput] = useState('')
+	const [claiming, setClaiming] = useState(false)
 	const [dec, setDec] = useState({})
 
 	async function load() {
@@ -29,23 +31,25 @@ export default function OwnerDashboard() {
 	async function verify(qrText) {
 		try {
 			const res = await api.post('/orders/verify', { qrText })
-			alert('Claimed order ' + res.data.orderId)
+			toast.success('Claimed order ' + res.data.orderId)
 			await load()
 		} catch (err) {
-			alert(err.response?.data?.error || 'Failed to verify')
+			toast.error(err.response?.data?.error || 'Failed to verify')
 		}
 	}
 
 	async function claimByToken() {
-		if (!tokenInput.trim()) return alert('Enter token')
+		if (!tokenInput.trim()) return toast.error('Enter token')
 		try {
-			const res = await api.post('/orders/verify', { token: tokenInput.trim() })
-			alert('Claimed order ' + res.data.orderId)
+			setClaiming(true)
+			const token = tokenInput.trim().toUpperCase()
+			const res = await api.post('/orders/verify', { token })
+			toast.success('Claimed order ' + res.data.orderId)
 			setTokenInput('')
 			await load()
 		} catch (err) {
-			alert(err.response?.data?.error || 'Failed to claim')
-		}
+			toast.error(err.response?.data?.error || 'Failed to claim')
+		} finally { setClaiming(false) }
 	}
 
 	async function reducePortions(itemId) {
@@ -54,7 +58,7 @@ export default function OwnerDashboard() {
 			await api.post(`/food/${itemId}/decrement`, { amount })
 			await load()
 		} catch (err) {
-			alert(err.response?.data?.error || 'Failed to reduce')
+			toast.error(err.response?.data?.error || 'Failed to reduce')
 		}
 	}
 
@@ -73,9 +77,12 @@ export default function OwnerDashboard() {
 					<QrScanner onDecode={(res) => { setScanResult(res); verify(res) }} onError={(err) => console.log(err?.message)} />
 				</div>
 			)}
-			<div className="mb-6 flex items-center gap-2">
-				<input className="input input-bordered input-sm w-48" placeholder="Enter token" value={tokenInput} onChange={e => setTokenInput(e.target.value.toUpperCase())} />
-				<button className="btn btn-sm" onClick={claimByToken}>Claim</button>
+			<div className="mb-6 flex items-end gap-2">
+				<div className="form-control">
+					<label className="label p-0 pb-1"><span className="label-text text-xs">Enter pickup token</span></label>
+					<input className="input input-bordered input-sm w-48" placeholder="e.g., 7KX9P2" value={tokenInput} onChange={e => setTokenInput(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === 'Enter') claimByToken() }} />
+				</div>
+				<button className={`btn btn-sm ${claiming ? 'btn-disabled' : ''}`} onClick={claimByToken} disabled={claiming}>{claiming ? 'Claiming...' : 'Claim'}</button>
 			</div>
 			<div className="grid md:grid-cols-2 gap-8">
 				<div>
