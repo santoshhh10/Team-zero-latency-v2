@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 
-export default function Hero({ onSearch, value }) {
+export default function Hero({ onSearch, value, onFilter }) {
 	return (
 		<section className="relative overflow-hidden">
 			<div className="max-w-6xl mx-auto px-4 py-12 md:py-16">
@@ -15,18 +15,26 @@ export default function Hero({ onSearch, value }) {
 					</div>
 				</div>
 				<div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-					{[
-						{ label: 'Near Expiry', color: 'warning', emoji: '⏰' },
-						{ label: 'Free Items', color: 'success', emoji: '🆓' },
-						{ label: 'Popular Now', color: 'primary', emoji: '🔥' },
-						{ label: 'Vegetarian', color: 'secondary', emoji: '🥗' }
-					].map(a => (
-						<div key={a.label} className="glass p-4 hover:border-white/20 cursor-pointer">
-							<div className={`badge badge-${a.color} badge-outline`}>{a.emoji}</div>
-							<div className="font-semibold mt-2">{a.label}</div>
-							<div className="text-xs text-gray-400">Quick filter</div>
-						</div>
-					))}
+					<button onClick={() => onFilter({ nearExpiry: true })} className="glass p-4 text-left hover:border-white/20">
+						<div className="badge badge-warning badge-outline">⏰</div>
+						<div className="font-semibold mt-2">Near Expiry</div>
+						<div className="text-xs text-gray-400">Within 1 hour</div>
+					</button>
+					<button onClick={() => onFilter({ free: true })} className="glass p-4 text-left hover:border-white/20">
+						<div className="badge badge-success badge-outline">🆓</div>
+						<div className="font-semibold mt-2">Free Items</div>
+						<div className="text-xs text-gray-400">Price ₹0</div>
+					</button>
+					<button onClick={() => onFilter({ sort: 'popular' })} className="glass p-4 text-left hover:border-white/20">
+						<div className="badge badge-primary badge-outline">🔥</div>
+						<div className="font-semibold mt-2">Popular Now</div>
+						<div className="text-xs text-gray-400">Highest discounts</div>
+					</button>
+					<button onClick={() => onFilter({ veg: true })} className="glass p-4 text-left hover:border-white/20">
+						<div className="badge badge-secondary badge-outline">🥗</div>
+						<div className="font-semibold mt-2">Vegetarian</div>
+						<div className="text-xs text-gray-400">Veg-friendly</div>
+					</button>
 				</div>
 			</div>
 		</section>
