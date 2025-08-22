@@ -28,3 +28,112 @@ body { background-image: var(--hero-grad); background-attachment: fixed; }
 .glow:hover { box-shadow: 0 10px 30px rgba(99,102,241,.25); transform: translateY(-2px); }
 .skeleton-glass { background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.12) 37%, rgba(255,255,255,.06) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; border-radius: 16px; }
 @keyframes shimmer { 0% {background-position: 100% 0} 100% {background-position: -100% 0} }
+
+/* Food-centric palette helpers and animations */
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.food-card:hover {
+  animation: bounce-in 0.3s ease;
+  box-shadow: 0 15px 35px rgba(255, 152, 0, 0.4);
+}
+
+.points-counter {
+  animation: pulse 2s infinite;
+}
+
+.floating-food {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* CTA button styling */
+.cta-button {
+  background: linear-gradient(45deg, #FF6B35, #F7931E);
+  border: none;
+  border-radius: 25px;
+  padding: 12px 30px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.cta-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s;
+}
+.cta-button:hover::before { left: 100%; }
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(255, 107, 53, 0.4);
+}
+
+/* Metric card styles for analytics */
+.metric-card {
+  background: linear-gradient(135deg, #FF9800 0%, #FF5722 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(255, 152, 0, 0.3);
+  color: white;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: url('/food-pattern.svg') repeat;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Leaderboard styles */
+.leaderboard-table {
+  background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(76, 175, 80, 0.3);
+}
+.leaderboard-row {
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 2px solid #E8F5E8;
+  transition: all 0.3s ease;
+}
+.leaderboard-row:hover {
+  background: rgba(255, 248, 225, 0.95);
+  transform: translateY(-2px);
+}
+.rank-badge {
+  background: radial-gradient(circle, #FFD700, #FFA500);
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}

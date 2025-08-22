@@ -29,14 +29,12 @@ export default function ListItem() {
 			fd.append('discountPercent', String(form.discountPercent))
 			fd.append('image', form.imageFile)
 
-			await api.post('/food', fd)
-			t
-oast.success('Listed!')
+						await api.post('/food', fd)
+			toast.success('Listed!')
 			setStep(0); setPreview('')
 			setForm({ title: '', description: '', quantity: 10, unit: 'portion', price: 0, qualityTag: 'SAFE', bestBefore: '', location: '', discountPercent: 0, imageFile: null })
-		} catch (err) {
-			t
-oast.error(err.response?.data?.error || 'Failed')
+				} catch (err) {
+			toast.error(err.response?.data?.error || 'Failed')
 		}
 	}
 

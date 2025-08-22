@@ -29,43 +29,59 @@ export default function Events() {
 	}
 
 	return (
-		<div className="max-w-6xl mx-auto px-4 py-8">
-			<h2 className="text-2xl font-bold mb-4">Campus Events</h2>
-			<div className="flex flex-wrap gap-2 mb-4">
-				{['All','Food Sharing','Cooking Classes','Sustainability Workshops'].map(t => (
-					<button key={t} className="btn btn-sm btn-ghost">{t}</button>
-				))}
-			</div>
-			<div className="grid md:grid-cols-2 gap-8">
-				<div>
-					{events.length === 0 ? (
-						<EmptyState title="No events yet" subtitle="Be the first to post a campus event!" />
-					) : (
-						<div className="space-y-3">
-							{events.map(ev => (
-								<div key={ev._id} className="glass p-4">
-									<div className="font-medium">{ev.title}</div>
-									<div className="text-sm text-gray-400">{ev.location} • {new Date(ev.startTime).toLocaleString()} - {new Date(ev.endTime).toLocaleString()}</div>
-								</div>
-							))}
-						</div>
-					)}
+		<div>
+			<section className="relative overflow-hidden" style={{background:'linear-gradient(135deg, #FFF8E1 0%, #E8F5E8 100%)'}}>
+				<div className="max-w-6xl mx-auto px-4 py-8">
+					<h2 className="text-3xl md:text-4xl font-extrabold">🎉 Campus Food Events 🍽️</h2>
+					<p className="text-gray-600">"Join the food-sharing community!"</p>
 				</div>
-				<div>
-					<h3 className="font-semibold mb-2">Post an event</h3>
-					{(!user || (user.role !== 'organizer' && user.role !== 'admin')) ? (
-						<div className="text-gray-500 text-sm">Sign in as organizer to post events</div>
-					) : (
-						<form onSubmit={createEvent} className="grid gap-3 glass p-4">
-							<input className="input input-bordered" placeholder="Title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
-							<input className="input input-bordered" placeholder="Location" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
-							<input type="datetime-local" className="input input-bordered" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
-							<input type="datetime-local" className="input input-bordered" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
-							<input type="number" className="input input-bordered" placeholder="Expected surplus portions" value={form.expectedSurplusPortions} onChange={e => setForm(f => ({ ...f, expectedSurplusPortions: Number(e.target.value) }))} />
-							<textarea className="textarea textarea-bordered" placeholder="Notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-							<button className="btn btn-primary" type="submit">Create event</button>
-						</form>
-					)}
+			</section>
+			<div className="max-w-6xl mx-auto px-4 py-8">
+				<div className="flex flex-wrap gap-3 mb-6">
+					<button className="px-3 py-1 rounded-full text-sm" style={{background:'linear-gradient(90deg, #FF9800, #FF5722)'}}>
+						<span className="text-white">All</span>
+					</button>
+					<button className="px-3 py-1 rounded-full text-sm" style={{background:'#4CAF50'}}>
+						<span className="text-white">🤝 Food Sharing</span>
+					</button>
+					<button className="px-3 py-1 rounded-full text-sm" style={{background:'#FF9800'}}>
+						<span className="text-white">👨‍🍳 Cooking Classes</span>
+					</button>
+					<button className="px-3 py-1 rounded-full text-sm" style={{background:'#26A69A'}}>
+						<span className="text-white">🌍 Sustainability Workshops</span>
+					</button>
+				</div>
+				<div className="grid md:grid-cols-2 gap-8">
+					<div>
+						{events.length === 0 ? (
+							<EmptyState title="No events yet" subtitle="Be the first to post a campus event!" />
+						) : (
+							<div className="space-y-3">
+								{events.map(ev => (
+									<div key={ev._id} className="glass p-4">
+										<div className="font-medium">{ev.title}</div>
+										<div className="text-sm text-gray-400">{ev.location} • {new Date(ev.startTime).toLocaleString()} - {new Date(ev.endTime).toLocaleString()}</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+					<div>
+						<h3 className="font-semibold mb-2">Post an event</h3>
+						{(!user || (user.role !== 'organizer' && user.role !== 'admin')) ? (
+							<div className="text-gray-500 text-sm">Sign in as organizer to post events</div>
+						) : (
+							<form onSubmit={createEvent} className="grid gap-3 glass p-4">
+								<input className="input input-bordered" placeholder="Title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+								<input className="input input-bordered" placeholder="Location" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
+								<input type="datetime-local" className="input input-bordered" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
+								<input type="datetime-local" className="input input-bordered" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
+								<input type="number" className="input input-bordered" placeholder="Expected surplus portions" value={form.expectedSurplusPortions} onChange={e => setForm(f => ({ ...f, expectedSurplusPortions: Number(e.target.value) }))} />
+								<textarea className="textarea textarea-bordered" placeholder="Notes" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+								<button className="btn btn-primary" type="submit">Create event</button>
+							</form>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>

@@ -7,7 +7,7 @@ import { User } from '../models/User.js';
 
 const router = express.Router();
 
-router.get('/summary', requireAuth, async (req, res) => {
+router.get('/summary', async (req, res) => {
 	try {
 		const [collectedOrders, activeItems] = await Promise.all([
 			Order.find({ status: 'COLLECTED' }).lean(),
