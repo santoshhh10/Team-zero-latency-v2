@@ -9,28 +9,28 @@ export default function OwnerDashboard() {
 	const [scanMode, setScanMode] = useState(false)
 	const [scanResult, setScanResult] = useState('')
 	const [tokenInput, setTokenInput] = useState('')
+	const [dec, setDec] = useState({})
+
+	async function load() {
+		const [mine, ords] = await Promise.all([
+			api.get('/food/mine'),
+			api.get('/orders/owner')
+		])
+		setItems(mine.data.items); setOrders(ords.data.orders)
+	}
 
 	useEffect(() => {
 		if (!user) return
 		let mounted = true
-		async function load() {
-			const [mine, ords] = await Promise.all([
-				api.get('/food/mine'),
-				api.get('/orders/owner')
-			])
-			if (mounted) { setItems(mine.data.items); setOrders(ords.data.orders) }
-		}
-		load();
+		;(async () => { if (mounted) await load() })()
 		return () => { mounted = false }
 	}, [user])
 
 	async function verify(qrText) {
 		try {
 			const res = await api.post('/orders/verify', { qrText })
-			alert('Verified order ' + res.data.orderId)
-			// refresh
-			const [mine, ords] = await Promise.all([api.get('/food/mine'), api.get('/orders/owner')])
-			setItems(mine.data.items); setOrders(ords.data.orders)
+			alert('Claimed order ' + res.data.orderId)
+			await load()
 		} catch (err) {
 			alert(err.response?.data?.error || 'Failed to verify')
 		}
@@ -42,10 +42,19 @@ export default function OwnerDashboard() {
 			const res = await api.post('/orders/verify', { token: tokenInput.trim() })
 			alert('Claimed order ' + res.data.orderId)
 			setTokenInput('')
-			const [mine, ords] = await Promise.all([api.get('/food/mine'), api.get('/orders/owner')])
-			setItems(mine.data.items); setOrders(ords.data.orders)
+			await load()
 		} catch (err) {
 			alert(err.response?.data?.error || 'Failed to claim')
+		}
+	}
+
+	async function reducePortions(itemId) {
+		const amount = Math.max(1, Number(dec[itemId]) || 1)
+		try {
+			await api.post(`/food/${itemId}/decrement`, { amount })
+			await load()
+		} catch (err) {
+			alert(err.response?.data?.error || 'Failed to reduce')
 		}
 	}
 
@@ -64,7 +73,6 @@ export default function OwnerDashboard() {
 					<QrScanner onDecode={(res) => { setScanResult(res); verify(res) }} onError={(err) => console.log(err?.message)} />
 				</div>
 			)}
-			{/* Token claim input */}
 			<div className="mb-6 flex items-center gap-2">
 				<input className="input input-bordered input-sm w-48" placeholder="Enter token" value={tokenInput} onChange={e => setTokenInput(e.target.value.toUpperCase())} />
 				<button className="btn btn-sm" onClick={claimByToken}>Claim</button>
@@ -78,8 +86,20 @@ export default function OwnerDashboard() {
 								<div>
 									<div className="font-medium">{it.title}</div>
 									<div className="text-xs text-gray-500">Qty: {it.quantity} • Status: {it.status}</div>
+									<div className="text-xs text-gray-500">Best before: {new Date(it.bestBefore).toLocaleString()}</div>
 								</div>
-								<div className="text-sm text-gray-500">Best before: {new Date(it.bestBefore).toLocaleString()}</div>
+								<div className="flex items-center gap-2">
+									<input
+										type="number"
+										min={1}
+										defaultValue={1}
+										className="input input-bordered input-xs w-16"
+										onChange={e => setDec(d => ({ ...d, [it._id]: Math.max(1, Number(e.target.value) || 1) }))}
+									/>
+									<button className="btn btn-xs btn-warning" onClick={() => reducePortions(it._id)} disabled={it.status === 'EXPIRED' || it.quantity <= 0}>
+										Reduce
+									</button>
+								</div>
 							</div>
 						))}
 					</div>

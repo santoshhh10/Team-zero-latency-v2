@@ -6,9 +6,11 @@ import { Order } from '../models/Order.js';
 import { User } from '../models/User.js';
 import { getIo } from '../realtime/io.js';
 import { v4 as uuidv4 } from 'uuid';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
+// List with filters
 router.get('/', async (req, res) => {
 	try {
 		const { q, owner, status = 'AVAILABLE', tag, veg, free, sort, page = 1, limit = 20, nearExpiry } = req.query;
@@ -38,6 +40,7 @@ router.get('/', async (req, res) => {
 	}
 });
 
+// My listings
 router.get('/mine', requireAuth, async (req, res) => {
 	try {
 		const items = await FoodItem.find({ owner: req.user._id }).sort({ createdAt: -1 }).lean();
@@ -48,10 +51,14 @@ router.get('/mine', requireAuth, async (req, res) => {
 	}
 });
 
-router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
+// Create listing (accepts image file from live capture)
+router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), upload.single('image'), async (req, res) => {
 	try {
 		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent, isVegetarian } = req.body;
 		if (!title || !quantity || !bestBefore) return res.status(400).json({ error: 'Missing required fields' });
+
+		const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+
 		const item = await FoodItem.create({
 			title,
 			description,
@@ -64,7 +71,8 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 			location,
 			preorderAllowed: preorderAllowed !== false,
 			discountPercent: discountPercent || 0,
-			isVegetarian: isVegetarian === true || isVegetarian === 'true'
+			isVegetarian: isVegetarian === true || isVegetarian === 'true',
+			imageUrl
 		});
 		getIo()?.emit('new-listing', { item });
 		res.status(201).json({ item });
@@ -74,7 +82,8 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 	}
 });
 
-router.put('/:id', requireAuth, async (req, res) => {
+// Update listing (optional image replace)
+router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
 	try {
 		const { id } = req.params;
 		if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
@@ -83,10 +92,11 @@ router.put('/:id', requireAuth, async (req, res) => {
 		if (existing.owner.toString() !== String(req.user._id) && req.user.role !== 'admin') {
 			return res.status(403).json({ error: 'Forbidden' });
 		}
-		const updatable = ['title', 'description', 'quantity', 'unit', 'price', 'qualityTag', 'bestBefore', 'location', 'preorderAllowed', 'discountPercent', 'status'];
+		const updatable = ['title', 'description', 'quantity', 'unit', 'price', 'qualityTag', 'bestBefore', 'location', 'preorderAllowed', 'discountPercent', 'status', 'isVegetarian'];
 		for (const key of updatable) {
 			if (key in req.body) existing[key] = req.body[key];
 		}
+		if (req.file) existing.imageUrl = `/uploads/${req.file.filename}`;
 		await existing.save();
 		res.json({ item: existing });
 	} catch (err) {
@@ -95,6 +105,7 @@ router.put('/:id', requireAuth, async (req, res) => {
 	}
 });
 
+// Reserve (token-based; no stock decrement here)
 router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async (req, res) => {
 	try {
 		const { id } = req.params;
@@ -104,8 +115,9 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 		if (item.status !== 'AVAILABLE') return res.status(400).json({ error: 'Item not available' });
 		if (new Date(item.bestBefore) <= new Date()) return res.status(400).json({ error: 'Item expired' });
 		if (item.quantity <= 0) return res.status(400).json({ error: 'Sold out' });
+
 		const quantity = Math.max(1, Math.min(1, Number(req.body.quantity) || 1));
-		const token = Math.random().toString(36).slice(2, 8).toUpperCase(); // human-friendly token
+		const token = Math.random().toString(36).slice(2, 8).toUpperCase();
 		const order = await Order.create({
 			foodItem: item._id,
 			buyer: req.user._id,
@@ -114,7 +126,6 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 			qrSecret: token,
 			qrPayload: JSON.stringify({ orderId: '', token })
 		});
-		// Fill orderId now that it exists; do NOT decrement stock here (will decrement on claim)
 		order.qrPayload = JSON.stringify({ orderId: String(order._id), token });
 		await order.save();
 		getIo()?.to(`user:${item.owner}`).emit('new-reservation', { orderId: order._id, itemId: item._id });
@@ -125,26 +136,29 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 	}
 });
 
-// Decrement portions manually (owner walk-ins)
+// Manual decrement (owner walk-ins)
 router.post('/:id/decrement', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const amount = Math.max(1, Number(req.body.amount) || 1);
-        if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
-        const item = await FoodItem.findById(id);
-        if (!item) return res.status(404).json({ error: 'Not found' });
-        if (String(item.owner) !== String(req.user._id) && req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Forbidden' });
-        }
-        if (item.status === 'EXPIRED') return res.status(400).json({ error: 'Item expired' });
-        item.quantity = Math.max(0, item.quantity - amount);
-        if (item.quantity <= 0) item.status = 'SOLD_OUT';
-        await item.save();
-        res.json({ item });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
+	try {
+		const { id } = req.params;
+		const amount = Math.max(1, Number(req.body.amount) || 1);
+		if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
+
+		const item = await FoodItem.findById(id);
+		if (!item) return res.status(404).json({ error: 'Not found' });
+		if (String(item.owner) !== String(req.user._id) && req.user.role !== 'admin') {
+			return res.status(403).json({ error: 'Forbidden' });
+		}
+		if (item.status === 'EXPIRED') return res.status(400).json({ error: 'Item expired' });
+
+		item.quantity = Math.max(0, item.quantity - amount);
+		if (item.quantity <= 0) item.status = 'SOLD_OUT';
+		await item.save();
+
+		res.json({ item });
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: 'Server error' });
+	}
 });
 
 export default router;

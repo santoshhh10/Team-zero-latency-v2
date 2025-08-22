@@ -6,7 +6,8 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './state/auth.jsx'
  import { SocketProvider } from './state/socket.jsx'
-
+const saved = localStorage.getItem('theme') || 'smartdark';
+document.documentElement.setAttribute('data-theme', saved);
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

@@ -7,17 +7,36 @@ export default function ListItem() {
 	const [form, setForm] = useState({ title: '', description: '', quantity: 10, unit: 'portion', price: 0, qualityTag: 'SAFE', bestBefore: '', location: '', discountPercent: 0, imageFile: null })
 	const [step, setStep] = useState(0)
 	const [preview, setPreview] = useState('')
-    const videoRef = useRef(null)
-    const [camOn, setCamOn] = useState(false)
+	const videoRef = useRef(null)
+	const [camOn, setCamOn] = useState(false)
 
 	async function submit(e) {
 		e.preventDefault()
+
+		if (step < 3) { setStep(3); return }
+		if (!form.imageFile) { toast.error('Please capture a photo'); return }
+
 		try {
-			await api.post('/food', form)
-			toast.success('Listed!')
-			setForm({ title: '', description: '', quantity: 10, unit: 'portion', price: 0, qualityTag: 'SAFE', bestBefore: '', location: '', discountPercent: 0 })
+			const fd = new FormData()
+			fd.append('title', form.title)
+			fd.append('description', form.description)
+			fd.append('quantity', String(form.quantity))
+			fd.append('unit', form.unit)
+			fd.append('price', String(form.price))
+			fd.append('qualityTag', form.qualityTag)
+			fd.append('bestBefore', form.bestBefore)
+			fd.append('location', form.location)
+			fd.append('discountPercent', String(form.discountPercent))
+			fd.append('image', form.imageFile)
+
+			await api.post('/food', fd)
+			t
+oast.success('Listed!')
+			setStep(0); setPreview('')
+			setForm({ title: '', description: '', quantity: 10, unit: 'portion', price: 0, qualityTag: 'SAFE', bestBefore: '', location: '', discountPercent: 0, imageFile: null })
 		} catch (err) {
-			toast.error(err.response?.data?.error || 'Failed')
+			t
+oast.error(err.response?.data?.error || 'Failed')
 		}
 	}
 
@@ -33,7 +52,7 @@ export default function ListItem() {
 					<div key={i} className={`flex-1 h-2 mx-1 rounded ${i<=step?'bg-primary':'bg-white/10'}`}></div>
 				))}
 			</div>
-			<form onSubmit={submit} className="grid grid-cols-1 gap-3 glass p-4">
+			<form onSubmit={submit} onKeyDown={(e) => { if (e.key === 'Enter' && step < 3) e.preventDefault() }} className="grid grid-cols-1 gap-3 glass p-4">
 				{step === 0 && (
 					<>
 						<input className="input input-bordered" placeholder="Title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
@@ -67,43 +86,40 @@ export default function ListItem() {
 				)}
 				{step === 3 && (
 					<>
-						<div className="">
-							<div className="text-sm text-gray-400 mb-2">Photo (optional)</div>
-							{/* Removed manual upload; live camera only */}
-							<div className="space-y-2">
-								{camOn ? (
-									<div className="space-y-2">
-										<video ref={videoRef} autoPlay playsInline className="w-full rounded" />
-										<div className="flex gap-2">
-											<button type="button" className="btn btn-sm" onClick={async () => {
-												try {
-													const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-													if (videoRef.current) videoRef.current.srcObject = stream
-												} catch {}
-											}}>Start</button>
-											<button type="button" className="btn btn-sm btn-primary" onClick={() => {
-												const video = videoRef.current; if (!video) return
-												const canvas = document.createElement('canvas')
-												canvas.width = video.videoWidth; canvas.height = video.videoHeight
-												const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0)
-												canvas.toBlob((blob) => {
-													if (blob) {
-														const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
-														const url = URL.createObjectURL(file)
-														setPreview(url); setForm(x => ({ ...x, imageFile: file }))
-													}
-												}, 'image/jpeg', 0.85)
-											}}>Capture</button>
-											<button type="button" className="btn btn-sm btn-ghost" onClick={() => {
-												const video = videoRef.current; if (video && video.srcObject) { (video.srcObject).getTracks().forEach(t => t.stop()); video.srcObject = null }
-												setCamOn(false)
-											}}>Stop</button>
-										</div>
+						<div className="space-y-2">
+							{camOn ? (
+								<div className="space-y-2">
+									<video ref={videoRef} autoPlay playsInline className="w-full rounded" />
+									<div className="flex gap-2">
+										<button type="button" className="btn btn-sm" onClick={async () => {
+											try {
+												const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+												if (videoRef.current) videoRef.current.srcObject = stream
+											} catch {}
+										}}>Start</button>
+										<button type="button" className="btn btn-sm btn-primary" onClick={() => {
+											const video = videoRef.current; if (!video) return
+											const canvas = document.createElement('canvas')
+											canvas.width = video.videoWidth; canvas.height = video.videoHeight
+											const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0)
+											canvas.toBlob((blob) => {
+												if (blob) {
+													const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
+													const url = URL.createObjectURL(file)
+													setPreview(url); setForm(x => ({ ...x, imageFile: file }))
+												}
+											}, 'image/jpeg', 0.85)
+										}}>Capture</button>
+										<button type="button" className="btn btn-sm btn-ghost" onClick={() => {
+											const video = videoRef.current; if (video && video.srcObject) { (video.srcObject).getTracks().forEach(t => t.stop()); video.srcObject = null }
+											setCamOn(false)
+										}}>Stop</button>
 									</div>
-								) : (
-									<button type="button" className="btn btn-outline btn-sm" onClick={() => setCamOn(true)}>Use Camera</button>
-								)}
-							</div>
+								</div>
+							) : (
+								<button type="button" className="btn btn-outline btn-sm" onClick={() => setCamOn(true)}>Use Camera</button>
+							)}
+							{preview && <img src={preview} alt="preview" className="h-28 object-cover rounded" />}
 						</div>
 					</>
 				)}
@@ -112,7 +128,7 @@ export default function ListItem() {
 					{step < 3 ? (
 						<button type="button" className="btn btn-primary" onClick={() => setStep(s => Math.min(3, s+1))}>Next</button>
 					) : (
-						<button className="btn btn-primary" type="submit">Publish</button>
+						<button className="btn btn-primary" type="submit" disabled={!form.imageFile}>Publish</button>
 					)}
 				</div>
 			</form>
