@@ -140,6 +140,8 @@ router.post('/:id/decrement', requireAuth, requireRole('canteen', 'organizer', '
         item.quantity = Math.max(0, item.quantity - amount);
         if (item.quantity <= 0) item.status = 'SOLD_OUT';
         await item.save();
+        // emit socket update
+        getIo()?.emit('item-updated', { itemId: item._id, quantity: item.quantity, status: item.status });
         res.json({ item });
     } catch (err) {
         console.error(err);

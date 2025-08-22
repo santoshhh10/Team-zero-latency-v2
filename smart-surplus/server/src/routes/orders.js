@@ -66,6 +66,10 @@ router.post('/verify', requireAuth, requireRole('canteen', 'organizer', 'admin')
 		const buyer = await User.findById(order.buyer);
 		buyer.greenPoints = (buyer.greenPoints || 0) + (order.quantity * 5);
 		await buyer.save();
+		// Emit live updates
+		const { getIo } = await import('../realtime/io.js');
+		getIo()?.to(`user:${order.owner}`).emit('order-claimed', { orderId: order._id, itemId: item._id });
+		getIo()?.emit('item-updated', { itemId: item._id, quantity: item.quantity, status: item.status });
 		res.json({ ok: true, orderId: order._id });
 	} catch (err) {
 		console.error(err);
