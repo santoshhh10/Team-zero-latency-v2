@@ -14,28 +14,28 @@ export default {
 		themes: [
 			{
 				smartlight: {
-					primary: '#6366f1',
-					secondary: '#10b981',
-					accent: '#f59e0b',
-					neutral: '#1f2937',
-					'base-100': '#f7fafc',
-					info: '#38bdf8',
-					success: '#10b981',
-					warning: '#f59e0b',
-					error: '#ef4444'
+					primary: '#4CAF50', // Fresh Green
+					secondary: '#FF9800', // Warm Orange
+					accent: '#FF5722', // Tomato Red
+					neutral: '#2E7D32', // Deep Forest
+					'base-100': '#FFF8E1', // Cream White
+					info: '#8BC34A',
+					success: '#4CAF50',
+					warning: '#FFC107',
+					error: '#FF7043'
 				}
 			},
 			{
 				smartdark: {
-					primary: '#6366f1',
-					secondary: '#10b981',
-					accent: '#f59e0b',
-					neutral: '#0b1220',
+					primary: '#8BC34A',
+					secondary: '#FFB74D',
+					accent: '#FF7043',
+					neutral: '#1B5E20',
 					'base-100': '#0f172a',
-					info: '#38bdf8',
-					success: '#10b981',
-					warning: '#f59e0b',
-					error: '#ef4444'
+					info: '#81D4FA',
+					success: '#66BB6A',
+					warning: '#FFD54F',
+					error: '#EF5350'
 				}
 			}
 		]

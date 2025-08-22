@@ -21,12 +21,29 @@ function Navbar() {
   const { useSocket } = require('./state/socket.jsx')
   const { notifications } = useSocket()
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
+  const [points, setPoints] = useState(user?.greenPoints || 0)
+  useEffect(() => {
+    const end = user?.greenPoints || 0
+    const start = points
+    if (start === end) return
+    const duration = 800
+    let raf
+    const t0 = performance.now()
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / duration)
+      const val = Math.round(start + (end - start) * p)
+      setPoints(val)
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => { if (raf) cancelAnimationFrame(raf) }
+  }, [user?.greenPoints])
   return (
-    <div className="sticky top-0 z-50 glass border-b border-white/10">
+    <div className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-r from-[#FFF8E1]/90 to-[#E8F5E8]/90 backdrop-blur">
       <div className="max-w-6xl mx-auto px-4">
         <div className="navbar p-0 min-h-16">
           <div className="flex-1 gap-3 items-center">
-            <Link to="/" className="font-extrabold text-2xl tracking-tight text-primary">SmartSurplus</Link>
+            <Link to="/" className="font-extrabold text-2xl tracking-tight text-primary">🍎 SmartSurplus</Link>
             <div className="hidden md:flex items-center flex-1">
               <div className="relative w-full">
                 <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -35,11 +52,15 @@ function Navbar() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/events" className="btn btn-ghost">Events</Link>
-            <Link to="/analytics" className="btn btn-ghost">Impact</Link>
+            <Link to="/events" className="btn btn-ghost">🎉 Events</Link>
+            <Link to="/analytics" className="btn btn-ghost">🌱 Impact</Link>
             {user?.role && (user.role === 'canteen' || user.role === 'organizer' || user.role === 'admin') && (
               <Link to="/list" className="btn btn-primary btn-sm gap-2 glow"><FiPlusCircle /> List surplus</Link>
             )}
+            <div className="hidden sm:flex items-center gap-2 rounded-full px-3 py-1 points-counter bg-white/60 text-[#2E7D32]">
+              <span>🌿</span>
+              <span className="text-sm font-semibold">{points} Green Points</span>
+            </div>
             <ThemeToggle />
             <div className="dropdown dropdown-end">
               <button className="btn btn-ghost btn-circle" onClick={() => setOpen(o => !o)}><FiBell size={20} /></button>
