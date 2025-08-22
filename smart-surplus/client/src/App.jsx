@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics.jsx'
 import { useAuth } from './state/auth.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { useSocket } from './state/socket.jsx'
+import { getLevelAndProgress } from './utils/points.js'
 
 function Navbar() {
   const { user } = useAuth()
@@ -55,9 +56,12 @@ function Navbar() {
             {user?.role && (user.role === 'canteen' || user.role === 'organizer' || user.role === 'admin') && (
               <Link to="/list" className="btn btn-primary btn-sm gap-2 glow"><FiPlusCircle /> List surplus</Link>
             )}
-            <div className="hidden sm:flex items-center gap-2 rounded-full px-3 py-1 points-counter bg-white/60 text-[#2E7D32]">
-              <span>🌿</span>
-              <span className="text-sm font-semibold">{points} Green Points</span>
+            <div className="hidden sm:flex items-center gap-3 rounded-full px-3 py-2 bg-base-100 border">
+              <div className="flex items-center gap-2">
+                <span>🌿</span>
+                <span className="text-sm font-semibold">{points} pts</span>
+              </div>
+              <PointsMiniBar points={points} />
             </div>
             <ThemeToggle />
             <div className="dropdown dropdown-end">
@@ -85,6 +89,18 @@ function Navbar() {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PointsMiniBar({ points }) {
+  const { level, progressPercent } = getLevelAndProgress(points)
+  return (
+    <div className="flex items-center gap-2">
+      <div className="text-xs">Lv {level}</div>
+      <div className="h-2 w-20 rounded bg-base-200 overflow-hidden">
+        <div className="h-2 bg-primary" style={{ width: `${progressPercent}%` }} />
       </div>
     </div>
   )

@@ -148,3 +148,20 @@ body { background-image: none; }
   justify-content: center;
   font-weight: bold;
 }
+
+/* Podium subtle accents */
+.podium-spot { position: relative; }
+.podium-spot::after {
+  content: '';
+  position: absolute; inset: -2px;
+  border-radius: 14px;
+  background: radial-gradient(120px 40px at 50% -10%, rgba(250,204,21,.25), transparent 60%);
+  pointer-events: none;
+}
+
+/* Sparkle keyframes (optional use) */
+@keyframes sparkle {
+  0%,100% { opacity: 0; transform: translateY(0) scale(0.9); }
+  50% { opacity: 1; transform: translateY(-4px) scale(1); }
+}
+.sparkle { animation: sparkle 1.8s ease-in-out infinite; }

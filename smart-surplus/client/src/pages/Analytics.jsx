@@ -1,14 +1,39 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '../state/auth.jsx'
 import { Line, Doughnut } from 'react-chartjs-2'
 import { Chart, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler } from 'chart.js'
 Chart.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend, Filler)
+
+function Podium({ users }) {
+	const [a,b,c] = users
+	return (
+		<div className="grid grid-cols-3 gap-3 items-end text-center">
+			<div className="bg-base-100 border rounded-xl p-3">
+				<div className="text-2xl">🥈</div>
+				<div className="font-semibold line-clamp-1">{b?.name || '-'}</div>
+				<div className="text-sm text-base-content/70">{b?.greenPoints || 0} pts</div>
+			</div>
+			<div className="bg-base-100 border rounded-xl p-4 shadow-md">
+				<div className="text-3xl">🥇</div>
+				<div className="font-semibold line-clamp-1">{a?.name || '-'}</div>
+				<div className="text-sm text-base-content/70">{a?.greenPoints || 0} pts</div>
+			</div>
+			<div className="bg-base-100 border rounded-xl p-3">
+				<div className="text-2xl">🥉</div>
+				<div className="font-semibold line-clamp-1">{c?.name || '-'}</div>
+				<div className="text-sm text-base-content/70">{c?.greenPoints || 0} pts</div>
+			</div>
+		</div>
+	)
+}
 
 export default function Analytics() {
 	const { api } = useAuth()
 	const [summary, setSummary] = useState(null)
 	const [top, setTop] = useState([])
 	const [anim, setAnim] = useState({ portions: 0, carbon: 0, water: 0, active: 0 })
+	const podium = useMemo(() => top.slice(0,3), [top])
+	const rest = useMemo(() => top.slice(3), [top])
 	useEffect(() => {
 		let mounted = true
 		async function load() {
@@ -41,7 +66,7 @@ export default function Analytics() {
 	}, [summary])
 	return (
 		<div className="fixed inset-0 z-40 bg-black/40">
-							<div className="absolute inset-x-0 bottom-0 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/75 rounded-t-2xl overflow-auto max-h-[92%]">
+			<div className="absolute inset-x-0 bottom-0 bg-base-100/90 backdrop-blur supports-[backdrop-filter]:bg-base-100/75 rounded-t-2xl overflow-auto max-h-[92%]">
 				<div className="max-w-6xl mx-auto px-4 py-6">
 					<div className="flex items-center justify-between">
 						<div>
@@ -78,24 +103,32 @@ export default function Analytics() {
 								<div className="font-semibold mb-2">Impact breakdown</div>
 								<Doughnut data={{ labels:['Carbon (kg)','Water (L)'], datasets:[{ data:[summary.carbonSavedKg, summary.waterSavedLiters], backgroundColor:['#4CAF50','#FF9800'] }] }} options={{ plugins:{legend:{position:'bottom'}} }} />
 							</div>
-							<div className="leaderboard-table p-0 lg:col-span-2">
-								<div className="px-4 py-3 font-semibold">Leaderboard (Green Points)</div>
-								<div className="overflow-x-auto bg-white/90">
-									<table className="table table-sm">
-										<thead>
-											<tr><th>#</th><th>Name</th><th>Role</th><th>Points</th></tr>
-										</thead>
-										<tbody>
-											{top.map((u, i) => (
-												<tr key={u._id || i} className="leaderboard-row">
-													<td><div className="rank-badge">{i+1}</div></td>
-													<td>{u.name}</td>
-													<td>{u.role}</td>
-													<td className="font-bold">{u.greenPoints}</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
+							<div className="glass p-4 lg:col-span-2">
+								<div className="font-semibold mb-3">Leaderboard (Green Points)</div>
+								{podium.length > 0 && (
+									<div className="mb-4">
+										<Podium users={podium} />
+									</div>
+								)}
+								<div className="space-y-2">
+									{rest.map((u, i) => {
+										const maxPts = Math.max(1, podium[0]?.greenPoints || u.greenPoints)
+										const pct = Math.min(100, Math.round((u.greenPoints / maxPts) * 100))
+										return (
+											<div key={u._id || i} className="p-3 border rounded flex items-center gap-3">
+												<div className="w-8 text-center text-sm">{i+4}</div>
+												<div className="flex-1">
+													<div className="flex items-center justify-between text-sm">
+														<div className="font-medium line-clamp-1">{u.name}</div>
+														<div className="font-semibold">{u.greenPoints} pts</div>
+													</div>
+													<div className="h-2 bg-base-200 rounded mt-1 overflow-hidden">
+														<div className="h-2 bg-primary" style={{ width: `${pct}%` }} />
+													</div>
+												</div>
+											</div>
+										)
+									})}
 								</div>
 							</div>
 						</div>
