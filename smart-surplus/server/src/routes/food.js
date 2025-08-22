@@ -11,15 +11,24 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
 	try {
-		const { q, owner, status = 'AVAILABLE', tag, page = 1, limit = 20 } = req.query;
+		const { q, owner, status = 'AVAILABLE', tag, veg, free, sort, page = 1, limit = 20, nearExpiry } = req.query;
 		const find = {};
 		if (status) find.status = status;
 		if (owner && mongoose.isValidObjectId(owner)) find.owner = owner;
 		if (tag) find.qualityTag = tag;
 		if (q) find.title = { $regex: q, $options: 'i' };
+		if (veg === 'true') find.isVegetarian = true;
+		if (free === 'true') find.price = 0;
+		if (nearExpiry === 'true') {
+			const now = new Date();
+			const soon = new Date(now.getTime() + 60 * 60 * 1000); // next 1h
+			find.bestBefore = { $lte: soon, $gt: now };
+		}
 		const skip = (Number(page) - 1) * Number(limit);
+		let sortSpec = { createdAt: -1 };
+		if (sort === 'popular') sortSpec = { discountPercent: -1, createdAt: -1 };
 		const [items, total] = await Promise.all([
-			FoodItem.find(find).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+			FoodItem.find(find).sort(sortSpec).skip(skip).limit(Number(limit)).lean(),
 			FoodItem.countDocuments(find)
 		]);
 		res.json({ items, total, page: Number(page), limit: Number(limit) });
@@ -41,7 +50,7 @@ router.get('/mine', requireAuth, async (req, res) => {
 
 router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
 	try {
-		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent } = req.body;
+		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent, isVegetarian } = req.body;
 		if (!title || !quantity || !bestBefore) return res.status(400).json({ error: 'Missing required fields' });
 		const item = await FoodItem.create({
 			title,
@@ -54,7 +63,8 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 			bestBefore: new Date(bestBefore),
 			location,
 			preorderAllowed: preorderAllowed !== false,
-			discountPercent: discountPercent || 0
+			discountPercent: discountPercent || 0,
+			isVegetarian: isVegetarian === true || isVegetarian === 'true'
 		});
 		getIo()?.emit('new-listing', { item });
 		res.status(201).json({ item });
@@ -95,23 +105,20 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 		if (new Date(item.bestBefore) <= new Date()) return res.status(400).json({ error: 'Item expired' });
 		if (item.quantity <= 0) return res.status(400).json({ error: 'Sold out' });
 		const quantity = Math.max(1, Math.min(1, Number(req.body.quantity) || 1));
-		const secret = uuidv4();
+		const token = Math.random().toString(36).slice(2, 8).toUpperCase(); // human-friendly token
 		const order = await Order.create({
 			foodItem: item._id,
 			buyer: req.user._id,
 			owner: item.owner,
 			quantity,
-			qrSecret: secret,
-			qrPayload: JSON.stringify({ orderId: '', secret: secret })
+			qrSecret: token,
+			qrPayload: JSON.stringify({ orderId: '', token })
 		});
-		// Fill orderId now that it exists
-		order.qrPayload = JSON.stringify({ orderId: String(order._id), secret });
+		// Fill orderId now that it exists; do NOT decrement stock here (will decrement on claim)
+		order.qrPayload = JSON.stringify({ orderId: String(order._id), token });
 		await order.save();
-		item.quantity = item.quantity - quantity;
-		if (item.quantity <= 0) item.status = 'SOLD_OUT';
-		await item.save();
 		getIo()?.to(`user:${item.owner}`).emit('new-reservation', { orderId: order._id, itemId: item._id });
-		res.status(201).json({ order: { id: order._id, status: order.status, quantity: order.quantity }, qrPayload: order.qrPayload });
+		res.status(201).json({ order: { id: order._id, status: order.status, quantity: order.quantity, token }, token, qrPayload: order.qrPayload });
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: 'Server error' });

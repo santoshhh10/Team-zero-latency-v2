@@ -30,23 +30,32 @@ router.get('/owner', requireAuth, requireRole('canteen', 'organizer', 'admin'), 
 
 router.post('/verify', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
 	try {
-		const { qrText } = req.body;
-		if (!qrText) return res.status(400).json({ error: 'Missing qrText' });
-		let payload = null;
-		try {
-			payload = JSON.parse(qrText);
-		} catch {
-			return res.status(400).json({ error: 'Invalid QR' });
+		const { qrText, orderId: bodyOrderId, token } = req.body;
+		let parsedOrderId = bodyOrderId;
+		let parsedToken = token;
+		if (!parsedOrderId || !parsedToken) {
+			if (!qrText) return res.status(400).json({ error: 'Missing token payload' });
+			try {
+				const payload = JSON.parse(qrText);
+				parsedOrderId = payload.orderId;
+				parsedToken = payload.token || payload.secret;
+			} catch {
+				return res.status(400).json({ error: 'Invalid token payload' });
+			}
 		}
-		const { orderId, secret } = payload || {};
-		if (!mongoose.isValidObjectId(orderId) || !secret) return res.status(400).json({ error: 'Invalid QR' });
-		const order = await Order.findById(orderId);
+		if (!mongoose.isValidObjectId(parsedOrderId) || !parsedToken) return res.status(400).json({ error: 'Invalid token' });
+		const order = await Order.findById(parsedOrderId);
 		if (!order) return res.status(404).json({ error: 'Order not found' });
 		if (String(order.owner) !== String(req.user._id)) return res.status(403).json({ error: 'Forbidden' });
 		if (order.status !== 'RESERVED') return res.status(400).json({ error: 'Order not in valid state' });
-		if (order.qrSecret !== secret) return res.status(400).json({ error: 'QR mismatch' });
+		if (order.qrSecret !== parsedToken) return res.status(400).json({ error: 'Token mismatch' });
 		const item = await FoodItem.findById(order.foodItem);
 		if (!item) return res.status(404).json({ error: 'Item not found' });
+		// Decrement stock now on claim
+		if (item.quantity < order.quantity) return res.status(400).json({ error: 'Insufficient stock' });
+		item.quantity -= order.quantity;
+		if (item.quantity <= 0) item.status = 'SOLD_OUT';
+		await item.save();
 		order.status = 'COLLECTED';
 		await order.save();
 		// Reward green points

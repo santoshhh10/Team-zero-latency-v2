@@ -14,7 +14,8 @@ const foodItemSchema = new mongoose.Schema(
 		location: { type: String },
 		preorderAllowed: { type: Boolean, default: true },
 		discountPercent: { type: Number, default: 0 },
-		expiryAlertSent: { type: Boolean, default: false }
+		expiryAlertSent: { type: Boolean, default: false },
+		isVegetarian: { type: Boolean, default: false }
 	},
 	{ timestamps: true }
 );
