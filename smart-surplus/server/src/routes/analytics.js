@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { FoodItem } from '../models/FoodItem.js';
 import { Order } from '../models/Order.js';
 import { config } from '../config.js';
+import { User } from '../models/User.js';
 
 const router = express.Router();
 
@@ -23,3 +24,14 @@ router.get('/summary', requireAuth, async (req, res) => {
 });
 
 export default router;
+
+// Leaderboard (top users by greenPoints)
+router.get('/leaderboard', requireAuth, async (req, res) => {
+    try {
+        const top = await User.find({}).sort({ greenPoints: -1 }).limit(10).select('name greenPoints role').lean();
+        res.json({ top });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});

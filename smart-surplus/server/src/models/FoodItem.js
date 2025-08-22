@@ -16,6 +16,7 @@ const foodItemSchema = new mongoose.Schema(
 		discountPercent: { type: Number, default: 0 },
 		expiryAlertSent: { type: Boolean, default: false },
 		imageUrl: { type: String },
+		isVegetarian: { type: Boolean, default: false }
 	},
 	{ timestamps: true }
 );

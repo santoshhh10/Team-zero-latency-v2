@@ -13,6 +13,7 @@ function getSocketOrigin() {
 export function SocketProvider({ children }) {
 	const { token } = useAuth()
 	const [socket, setSocket] = useState(null)
+	const [notifications, setNotifications] = useState([])
 
 	useEffect(() => {
 		const origin = getSocketOrigin()
@@ -20,6 +21,7 @@ export function SocketProvider({ children }) {
 		setSocket(s)
 		s.on('connect', () => {})
 		s.on('new-listing', ({ item }) => {
+			setNotifications(n => [{ type: 'new-listing', at: Date.now(), data: { title: item.title, location: item.location } }, ...n].slice(0, 50))
 			toast.custom(t => (
 				<div className="alert shadow bg-base-100 border">
 					<span>New listing: <b>{item.title}</b> • {item.location || 'Campus'}</span>
@@ -27,12 +29,13 @@ export function SocketProvider({ children }) {
 			))
 		})
 		s.on('expiry-alert', (p) => {
+			setNotifications(n => [{ type: 'expiry-alert', at: Date.now(), data: { title: p.title, location: p.location } }, ...n].slice(0, 50))
 			toast((t) => `Near expiry at ${p.location || 'Campus'}: ${p.title}`, { icon: '⏰' })
 		})
 		return () => { s.disconnect() }
 	}, [token])
 
-	const value = useMemo(() => ({ socket }), [socket])
+	const value = useMemo(() => ({ socket, notifications, setNotifications }), [socket, notifications])
 	return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
 }
 

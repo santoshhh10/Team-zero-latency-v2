@@ -10,7 +10,7 @@ export default function Home() {
 	const { api, user } = useAuth()
 	const [items, setItems] = useState([])
 	const [loading, setLoading] = useState(true)
-	const [filter, setFilter] = useState({ tag: '', q: '' })
+	const [filter, setFilter] = useState({ tag: '', q: '', veg: false, free: false, nearExpiry: false, sort: '' })
 
 	useEffect(() => { AOS.init({ duration: 600, once: true }) }, [])
 
@@ -18,13 +18,18 @@ export default function Home() {
 		let mounted = true
 		async function load() {
 			setLoading(true)
-			const res = await api.get('/food', { params: { status: 'AVAILABLE', q: filter.q, tag: filter.tag } })
+			const params = { status: 'AVAILABLE', q: filter.q, tag: filter.tag }
+			if (filter.veg) params.veg = true
+			if (filter.free) params.free = true
+			if (filter.nearExpiry) params.nearExpiry = true
+			if (filter.sort) params.sort = filter.sort
+			const res = await api.get('/food', { params })
 			if (mounted) setItems(res.data.items)
 			setLoading(false)
 		}
 		load()
 		return () => { mounted = false }
-	}, [filter.q, filter.tag])
+	}, [filter.q, filter.tag, filter.veg, filter.free, filter.nearExpiry, filter.sort])
 
 	async function reserve(item) {
 		if (!user) return alert('Please sign in to reserve')
@@ -34,7 +39,7 @@ export default function Home() {
 
 	return (
 		<div>
-			<Hero value={filter.q} onSearch={(q) => setFilter(f => ({ ...f, q }))} />
+			<Hero value={filter.q} onSearch={(q) => setFilter(f => ({ ...f, q }))} onFilter={(filt) => setFilter(prev => ({ ...prev, ...filt }))} />
 			<section>
 				<div className="max-w-6xl mx-auto px-4 py-8">
 					<div className="flex items-center gap-3 mb-4">

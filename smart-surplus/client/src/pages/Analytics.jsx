@@ -7,9 +7,16 @@ Chart.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement
 export default function Analytics() {
 	const { api } = useAuth()
 	const [summary, setSummary] = useState(null)
+	const [top, setTop] = useState([])
 	useEffect(() => {
 		let mounted = true
-		async function load() { const res = await api.get('/analytics/summary'); if (mounted) setSummary(res.data) }
+		async function load() {
+			const [sum, lb] = await Promise.all([
+				api.get('/analytics/summary'),
+				api.get('/analytics/leaderboard')
+			])
+			if (mounted) { setSummary(sum.data); setTop(lb.data.top || []) }
+		}
 		load();
 		return () => { mounted = false }
 	}, [])
@@ -53,6 +60,26 @@ export default function Analytics() {
 						<div className="glass p-4">
 							<div className="font-semibold mb-2">Impact breakdown</div>
 							<Doughnut data={{ labels:['Carbon (kg)','Water (L)'], datasets:[{ data:[summary.carbonSavedKg, summary.waterSavedLiters], backgroundColor:['#6366f1','#10b981'] }] }} options={{ plugins:{legend:{position:'bottom'}} }} />
+						</div>
+						<div className="glass p-4 md:col-span-2">
+							<div className="font-semibold mb-2">Leaderboard (Green Points)</div>
+							<div className="overflow-x-auto">
+								<table className="table table-sm">
+									<thead>
+										<tr><th>#</th><th>Name</th><th>Role</th><th>Points</th></tr>
+									</thead>
+									<tbody>
+										{top.map((u, i) => (
+											<tr key={u._id || i}>
+												<td>{i+1}</td>
+												<td>{u.name}</td>
+												<td>{u.role}</td>
+												<td>{u.greenPoints}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 				)}

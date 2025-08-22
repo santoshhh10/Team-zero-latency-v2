@@ -10,17 +10,27 @@ import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
+// List with filters
 router.get('/', async (req, res) => {
 	try {
-		const { q, owner, status = 'AVAILABLE', tag, page = 1, limit = 20 } = req.query;
+		const { q, owner, status = 'AVAILABLE', tag, veg, free, sort, page = 1, limit = 20, nearExpiry } = req.query;
 		const find = {};
 		if (status) find.status = status;
 		if (owner && mongoose.isValidObjectId(owner)) find.owner = owner;
 		if (tag) find.qualityTag = tag;
 		if (q) find.title = { $regex: q, $options: 'i' };
+		if (veg === 'true') find.isVegetarian = true;
+		if (free === 'true') find.price = 0;
+		if (nearExpiry === 'true') {
+			const now = new Date();
+			const soon = new Date(now.getTime() + 60 * 60 * 1000); // next 1h
+			find.bestBefore = { $lte: soon, $gt: now };
+		}
 		const skip = (Number(page) - 1) * Number(limit);
+		let sortSpec = { createdAt: -1 };
+		if (sort === 'popular') sortSpec = { discountPercent: -1, createdAt: -1 };
 		const [items, total] = await Promise.all([
-			FoodItem.find(find).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+			FoodItem.find(find).sort(sortSpec).skip(skip).limit(Number(limit)).lean(),
 			FoodItem.countDocuments(find)
 		]);
 		res.json({ items, total, page: Number(page), limit: Number(limit) });
@@ -29,29 +39,8 @@ router.get('/', async (req, res) => {
 		res.status(500).json({ error: 'Server error' });
 	}
 });
-router.post('/:id/decrement', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const amount = Math.max(1, Number(req.body.amount) || 1);
-    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
 
-    const item = await FoodItem.findById(id);
-    if (!item) return res.status(404).json({ error: 'Not found' });
-    if (String(item.owner) !== String(req.user._id) && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-    if (item.status === 'EXPIRED') return res.status(400).json({ error: 'Item expired' });
-
-    item.quantity = Math.max(0, item.quantity - amount);
-    if (item.quantity <= 0) item.status = 'SOLD_OUT';
-    await item.save();
-
-    res.json({ item });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+// My listings
 router.get('/mine', requireAuth, async (req, res) => {
 	try {
 		const items = await FoodItem.find({ owner: req.user._id }).sort({ createdAt: -1 }).lean();
@@ -62,9 +51,10 @@ router.get('/mine', requireAuth, async (req, res) => {
 	}
 });
 
+// Create listing (accepts image file from live capture)
 router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), upload.single('image'), async (req, res) => {
 	try {
-		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent } = req.body;
+		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent, isVegetarian } = req.body;
 		if (!title || !quantity || !bestBefore) return res.status(400).json({ error: 'Missing required fields' });
 
 		const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
@@ -81,6 +71,7 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), uplo
 			location,
 			preorderAllowed: preorderAllowed !== false,
 			discountPercent: discountPercent || 0,
+			isVegetarian: isVegetarian === true || isVegetarian === 'true',
 			imageUrl
 		});
 		getIo()?.emit('new-listing', { item });
@@ -91,6 +82,7 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), uplo
 	}
 });
 
+// Update listing (optional image replace)
 router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
 	try {
 		const { id } = req.params;
@@ -100,13 +92,11 @@ router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
 		if (existing.owner.toString() !== String(req.user._id) && req.user.role !== 'admin') {
 			return res.status(403).json({ error: 'Forbidden' });
 		}
-		const updatable = ['title', 'description', 'quantity', 'unit', 'price', 'qualityTag', 'bestBefore', 'location', 'preorderAllowed', 'discountPercent', 'status'];
+		const updatable = ['title', 'description', 'quantity', 'unit', 'price', 'qualityTag', 'bestBefore', 'location', 'preorderAllowed', 'discountPercent', 'status', 'isVegetarian'];
 		for (const key of updatable) {
 			if (key in req.body) existing[key] = req.body[key];
 		}
-		if (req.file) {
-			existing.imageUrl = `/uploads/${req.file.filename}`;
-		}
+		if (req.file) existing.imageUrl = `/uploads/${req.file.filename}`;
 		await existing.save();
 		res.json({ item: existing });
 	} catch (err) {
@@ -115,6 +105,7 @@ router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
 	}
 });
 
+// Reserve (token-based; no stock decrement here)
 router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async (req, res) => {
 	try {
 		const { id } = req.params;
@@ -125,26 +116,45 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 		if (new Date(item.bestBefore) <= new Date()) return res.status(400).json({ error: 'Item expired' });
 		if (item.quantity <= 0) return res.status(400).json({ error: 'Sold out' });
 
-		const requested = Number(req.body.quantity) || 1;
-		const quantity = Math.max(1, Math.min(requested, item.quantity));
-
-		const secret = uuidv4();
+		const quantity = Math.max(1, Math.min(1, Number(req.body.quantity) || 1));
+		const token = Math.random().toString(36).slice(2, 8).toUpperCase();
 		const order = await Order.create({
 			foodItem: item._id,
 			buyer: req.user._id,
 			owner: item.owner,
 			quantity,
-			qrSecret: secret,
-			qrPayload: JSON.stringify({ orderId: '', secret: secret })
+			qrSecret: token,
+			qrPayload: JSON.stringify({ orderId: '', token })
 		});
-		// Fill orderId now that it exists
-		order.qrPayload = JSON.stringify({ orderId: String(order._id), secret });
+		order.qrPayload = JSON.stringify({ orderId: String(order._id), token });
 		await order.save();
-		item.quantity = item.quantity - quantity;
+		getIo()?.to(`user:${item.owner}`).emit('new-reservation', { orderId: order._id, itemId: item._id });
+		res.status(201).json({ order: { id: order._id, status: order.status, quantity: order.quantity, token }, token, qrPayload: order.qrPayload });
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: 'Server error' });
+	}
+});
+
+// Manual decrement (owner walk-ins)
+router.post('/:id/decrement', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
+	try {
+		const { id } = req.params;
+		const amount = Math.max(1, Number(req.body.amount) || 1);
+		if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
+
+		const item = await FoodItem.findById(id);
+		if (!item) return res.status(404).json({ error: 'Not found' });
+		if (String(item.owner) !== String(req.user._id) && req.user.role !== 'admin') {
+			return res.status(403).json({ error: 'Forbidden' });
+		}
+		if (item.status === 'EXPIRED') return res.status(400).json({ error: 'Item expired' });
+
+		item.quantity = Math.max(0, item.quantity - amount);
 		if (item.quantity <= 0) item.status = 'SOLD_OUT';
 		await item.save();
-		getIo()?.to(`user:${item.owner}`).emit('new-reservation', { orderId: order._id, itemId: item._id });
-		res.status(201).json({ order: { id: order._id, status: order.status, quantity: order.quantity }, qrPayload: order.qrPayload });
+
+		res.json({ item });
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ error: 'Server error' });

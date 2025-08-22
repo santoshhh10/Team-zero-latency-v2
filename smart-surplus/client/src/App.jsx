@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { FiSearch, FiBell, FiUser, FiPlusCircle } from 'react-icons/fi'
 import Home from './pages/Home.jsx'
 import Auth from './pages/Auth.jsx'
@@ -14,6 +14,12 @@ import ThemeToggle from './components/ThemeToggle.jsx'
 function Navbar() {
   const { user } = useAuth()
   const location = useLocation()
+  const [open, setOpen] = useState(false)
+  const [notif, setNotif] = useState([])
+  try { const { notifications } = require('./state/socket.jsx'); } catch {}
+  // lazy import hook
+  const { useSocket } = require('./state/socket.jsx')
+  const { notifications } = useSocket()
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
   return (
     <div className="sticky top-0 z-50 glass border-b border-white/10">
@@ -35,7 +41,24 @@ function Navbar() {
               <Link to="/list" className="btn btn-primary btn-sm gap-2 glow"><FiPlusCircle /> List surplus</Link>
             )}
             <ThemeToggle />
-            <button className="btn btn-ghost btn-circle"><FiBell size={20} /></button>
+            <div className="dropdown dropdown-end">
+              <button className="btn btn-ghost btn-circle" onClick={() => setOpen(o => !o)}><FiBell size={20} /></button>
+              {open && (
+                <ul className="dropdown-content z-50 menu p-2 shadow glass rounded-box w-72 right-0 max-h-80 overflow-auto">
+                  {notifications.length === 0 ? (
+                    <li className="text-sm text-gray-400 px-2 py-2">No notifications yet</li>
+                  ) : notifications.map((n, idx) => (
+                    <li key={idx} className="px-2 py-2">
+                      <div className="text-sm">
+                        {n.type === 'new-listing' && (<span>New listing: <b>{n.data.title}</b> • {n.data.location || 'Campus'}</span>)}
+                        {n.type === 'expiry-alert' && (<span>Near expiry: <b>{n.data.title}</b> • {n.data.location || 'Campus'}</span>)}
+                      </div>
+                      <div className="text-xs text-gray-500">{new Date(n.at).toLocaleTimeString()}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             {user ? (
               <Link to="/me" className="btn btn-outline btn-sm gap-2"><FiUser /> {user.name.split(' ')[0]}</Link>
             ) : (

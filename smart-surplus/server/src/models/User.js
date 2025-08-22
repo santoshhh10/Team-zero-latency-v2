@@ -13,7 +13,9 @@ const userSchema = new mongoose.Schema(
 		},
 		greenPoints: { type: Number, default: 0 },
 		organization: { type: String },
-		location: { type: String }
+		location: { type: String },
+		loginCode: { type: String },
+		loginCodeExpires: { type: Date }
 	},
 	{ timestamps: true }
 );
