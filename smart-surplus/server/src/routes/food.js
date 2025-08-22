@@ -125,4 +125,26 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 	}
 });
 
+// Decrement portions manually (owner walk-ins)
+router.post('/:id/decrement', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const amount = Math.max(1, Number(req.body.amount) || 1);
+        if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
+        const item = await FoodItem.findById(id);
+        if (!item) return res.status(404).json({ error: 'Not found' });
+        if (String(item.owner) !== String(req.user._id) && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        if (item.status === 'EXPIRED') return res.status(400).json({ error: 'Item expired' });
+        item.quantity = Math.max(0, item.quantity - amount);
+        if (item.quantity <= 0) item.status = 'SOLD_OUT';
+        await item.save();
+        res.json({ item });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 export default router;
