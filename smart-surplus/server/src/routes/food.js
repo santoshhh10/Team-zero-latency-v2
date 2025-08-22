@@ -6,6 +6,7 @@ import { Order } from '../models/Order.js';
 import { User } from '../models/User.js';
 import { getIo } from '../realtime/io.js';
 import { v4 as uuidv4 } from 'uuid';
+import { upload } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -28,7 +29,29 @@ router.get('/', async (req, res) => {
 		res.status(500).json({ error: 'Server error' });
 	}
 });
+router.post('/:id/decrement', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const amount = Math.max(1, Number(req.body.amount) || 1);
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
 
+    const item = await FoodItem.findById(id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    if (String(item.owner) !== String(req.user._id) && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (item.status === 'EXPIRED') return res.status(400).json({ error: 'Item expired' });
+
+    item.quantity = Math.max(0, item.quantity - amount);
+    if (item.quantity <= 0) item.status = 'SOLD_OUT';
+    await item.save();
+
+    res.json({ item });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 router.get('/mine', requireAuth, async (req, res) => {
 	try {
 		const items = await FoodItem.find({ owner: req.user._id }).sort({ createdAt: -1 }).lean();
@@ -39,10 +62,13 @@ router.get('/mine', requireAuth, async (req, res) => {
 	}
 });
 
-router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), async (req, res) => {
+router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), upload.single('image'), async (req, res) => {
 	try {
 		const { title, description, quantity, unit, price, qualityTag, bestBefore, location, preorderAllowed, discountPercent } = req.body;
 		if (!title || !quantity || !bestBefore) return res.status(400).json({ error: 'Missing required fields' });
+
+		const imageUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+
 		const item = await FoodItem.create({
 			title,
 			description,
@@ -54,7 +80,8 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 			bestBefore: new Date(bestBefore),
 			location,
 			preorderAllowed: preorderAllowed !== false,
-			discountPercent: discountPercent || 0
+			discountPercent: discountPercent || 0,
+			imageUrl
 		});
 		getIo()?.emit('new-listing', { item });
 		res.status(201).json({ item });
@@ -64,7 +91,7 @@ router.post('/', requireAuth, requireRole('canteen', 'organizer', 'admin'), asyn
 	}
 });
 
-router.put('/:id', requireAuth, async (req, res) => {
+router.put('/:id', requireAuth, upload.single('image'), async (req, res) => {
 	try {
 		const { id } = req.params;
 		if (!mongoose.isValidObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
@@ -76,6 +103,9 @@ router.put('/:id', requireAuth, async (req, res) => {
 		const updatable = ['title', 'description', 'quantity', 'unit', 'price', 'qualityTag', 'bestBefore', 'location', 'preorderAllowed', 'discountPercent', 'status'];
 		for (const key of updatable) {
 			if (key in req.body) existing[key] = req.body[key];
+		}
+		if (req.file) {
+			existing.imageUrl = `/uploads/${req.file.filename}`;
 		}
 		await existing.save();
 		res.json({ item: existing });
@@ -94,7 +124,10 @@ router.post('/:id/reserve', requireAuth, requireRole('student', 'admin'), async 
 		if (item.status !== 'AVAILABLE') return res.status(400).json({ error: 'Item not available' });
 		if (new Date(item.bestBefore) <= new Date()) return res.status(400).json({ error: 'Item expired' });
 		if (item.quantity <= 0) return res.status(400).json({ error: 'Sold out' });
-		const quantity = Math.max(1, Math.min(1, Number(req.body.quantity) || 1));
+
+		const requested = Number(req.body.quantity) || 1;
+		const quantity = Math.max(1, Math.min(requested, item.quantity));
+
 		const secret = uuidv4();
 		const order = await Order.create({
 			foodItem: item._id,
