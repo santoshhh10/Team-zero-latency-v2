@@ -10,15 +10,13 @@ import Events from './pages/Events.jsx'
 import Analytics from './pages/Analytics.jsx'
 import { useAuth } from './state/auth.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
+import { useSocket } from './state/socket.jsx'
 
 function Navbar() {
   const { user } = useAuth()
   const location = useLocation()
   const [open, setOpen] = useState(false)
   const [notif, setNotif] = useState([])
-  try { const { notifications } = require('./state/socket.jsx'); } catch {}
-  // lazy import hook
-  const { useSocket } = require('./state/socket.jsx')
   const { notifications } = useSocket()
   useEffect(() => { window.scrollTo(0, 0) }, [location.pathname])
   const [points, setPoints] = useState(user?.greenPoints || 0)
