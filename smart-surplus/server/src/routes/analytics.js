@@ -28,7 +28,11 @@ export default router;
 // Leaderboard (top users by greenPoints)
 router.get('/leaderboard', requireAuth, async (req, res) => {
     try {
-        const top = await User.find({}).sort({ greenPoints: -1 }).limit(10).select('name greenPoints role').lean();
+        const top = await User.find({ role: { $ne: 'canteen' } })
+          .sort({ greenPoints: -1 })
+          .limit(10)
+          .select('name greenPoints role')
+          .lean();
         res.json({ top });
     } catch (err) {
         console.error(err);

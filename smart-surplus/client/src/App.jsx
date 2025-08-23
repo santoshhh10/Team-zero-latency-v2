@@ -54,6 +54,9 @@ function Navbar() {
             <Link to="/events" className="btn btn-ghost">🎉 Events</Link>
             <Link to="/analytics" className="btn btn-ghost">🌱 Impact</Link>
             {user?.role && (user.role === 'canteen' || user.role === 'organizer' || user.role === 'admin') && (
+              <Link to="/owner" className="btn btn-ghost">🏪 Owner</Link>
+            )}
+            {user?.role && (user.role === 'canteen' || user.role === 'organizer' || user.role === 'admin') && (
               <Link to="/list" className="btn btn-primary btn-sm gap-2 glow"><FiPlusCircle /> List surplus</Link>
             )}
             <div className="hidden sm:flex items-center gap-3 rounded-full px-3 py-2 bg-base-100 border">

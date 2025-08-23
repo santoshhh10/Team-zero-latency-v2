@@ -38,10 +38,10 @@ export default function Events() {
 			</section>
 			<div className="max-w-6xl mx-auto px-4 py-8">
 				<div className="flex flex-wrap gap-3 mb-6">
-					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">All</button>
-					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">🤝 Food Sharing</button>
-					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">👨‍🍳 Cooking Classes</button>
-					<button className="px-3 py-1 rounded-full text-sm border bg-base-100">🌍 Sustainability Workshops</button>
+					<button className="px-3 py-1 rounded-full text-sm text-white" style={{background:'linear-gradient(90deg,#FF9800,#FF5722)'}}>All</button>
+					<button className="px-3 py-1 rounded-full text-sm text-white" style={{background:'linear-gradient(90deg,#22C55E,#16A34A)'}}>🤝 Food Sharing</button>
+					<button className="px-3 py-1 rounded-full text-sm text-white" style={{background:'linear-gradient(90deg,#F59E0B,#FB923C)'}}>👨‍🍳 Cooking Classes</button>
+					<button className="px-3 py-1 rounded-full text-sm text-white" style={{background:'linear-gradient(90deg,#14B8A6,#0EA5E9)'}}>🌍 Sustainability Workshops</button>
 				</div>
 				<div className="grid md:grid-cols-2 gap-8">
 					<div>
