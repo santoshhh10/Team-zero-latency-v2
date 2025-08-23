@@ -46,22 +46,22 @@ export default function Hero({ onSearch, value, onFilter }) {
 				</div>
 				<div className="mt-4 text-sm text-[#2E7D32] font-semibold">Community impact: 🍽️ {anim} portions • 🌱 {impact.carbonSavedKg.toFixed(1)} kg • 💧 {impact.waterSavedLiters.toFixed(0)} L</div>
 				<div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-					<button onClick={() => onFilter({ nearExpiry: true })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl border bg-base-100">
+					<button onClick={() => onFilter({ nearExpiry: true })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl text-white" style={{background:'linear-gradient(135deg,#FF7043 0%,#FF9800 100%)'}}>
 						<div className="badge badge-warning badge-outline">🕐</div>
 						<div className="font-semibold mt-2">Near Expiry</div>
 						<div className="text-xs text-white/90">Within 1 hour</div>
 					</button>
-					<button onClick={() => onFilter({ free: true })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl border bg-base-100">
+					<button onClick={() => onFilter({ free: true })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl text-[#2E7D32]" style={{background:'linear-gradient(135deg,#FFD54F 0%,#FFC107 100%)'}}>
 						<div className="badge badge-success badge-outline">🎁</div>
 						<div className="font-semibold mt-2">Free Items</div>
 						<div className="text-xs text-[#2E7D32]">Price ₹0</div>
 					</button>
-					<button onClick={() => onFilter({ sort: 'popular' })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl border bg-base-100">
+					<button onClick={() => onFilter({ sort: 'popular' })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl text-white" style={{background:'linear-gradient(135deg,#FF9800 0%,#FF5722 100%)'}}>
 						<div className="badge badge-primary badge-outline">🔥</div>
 						<div className="font-semibold mt-2">Popular Now</div>
 						<div className="text-xs text-white/90">Trending deals</div>
 					</button>
-					<button onClick={() => onFilter({ veg: true })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl border bg-base-100">
+					<button onClick={() => onFilter({ veg: true })} className="p-4 text-left hover:translate-y-[-2px] transition rounded-xl text-white" style={{background:'linear-gradient(135deg,#8BC34A 0%,#4CAF50 100%)'}}>
 						<div className="badge badge-secondary badge-outline">🥬</div>
 						<div className="font-semibold mt-2">Vegetarian</div>
 						<div className="text-xs text-white/90">Leafy fresh</div>
