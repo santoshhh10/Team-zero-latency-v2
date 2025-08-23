@@ -15,7 +15,10 @@ const userSchema = new mongoose.Schema(
 		organization: { type: String },
 		location: { type: String },
 		loginCode: { type: String },
-		loginCodeExpires: { type: Date }
+		loginCodeExpires: { type: Date },
+		emailVerified: { type: Boolean, default: false },
+		verifyCode: { type: String },
+		verifyCodeExpires: { type: Date }
 	},
 	{ timestamps: true }
 );
